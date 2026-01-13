@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Agent Requirement Gathering System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .agent-card {
+            transition: all 0.3s ease;
+        }
+        .agent-card:hover {
+            transform: translateY(-2px);
+        }
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .status-idle { background-color: #10b981; }
+        .status-processing { background-color: #f59e0b; }
+        .status-error { background-color: #ef4444; }
+        .message-bubble {
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-white shadow-sm border-b">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="bg-blue-600 p-2 rounded-lg">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-bold text-gray-900">Multi-Agent Requirement System</h1>
+                            <p class="text-sm text-gray-500">AI-Powered Requirement Gathering</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button onclick="toggleSystemStatus()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                            System Status
+                        </button>
+                        <button onclick="clearMessages()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
+                            Clear Messages
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Left Panel - Agent Status -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-lg font-semibold mb-4">Agent Status</h2>
+                        <div id="agentStatus" class="space-y-3">
+                            <!-- Agent status will be populated here -->
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="bg-white rounded-lg shadow-md p-6 mt-6">
+                        <h2 class="text-lg font-semibold mb-4">Quick Actions</h2>
+                        <div class="space-y-3">
+                            <button onclick="startRequirementGathering()" class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                                Start Requirement Gathering
+                            </button>
+                            <button onclick="analyzeRequirements()" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                                Analyze Requirements
+                            </button>
+                            <button onclick="validateRequirements()" class="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
+                                Validate Requirements
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Middle Panel - Input & Configuration -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-lg font-semibold mb-4">Stakeholder Configuration</h2>
+                        <form id="stakeholderForm" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Stakeholder Name</label>
+                                <input type="text" id="stakeholderName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="John Smith">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                                <select id="stakeholderRole" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="business_analyst">Business Analyst</option>
+                                    <option value="developer">Developer</option>
+                                    <option value="user">End User</option>
+                                    <option value="manager">Project Manager</option>
+                                    <option value="qa_engineer">QA Engineer</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Domain</label>
+                                <select id="domain" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="ecommerce">E-commerce</option>
+                                    <option value="healthcare">Healthcare</option>
+                                    <option value="education">Education</option>
+                                    <option value="finance">Finance</option>
+                                    <option value="manufacturing">Manufacturing</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Project Name</label>
+                                <input type="text" id="projectName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="Online Platform">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Timeline</label>
+                                <input type="text" id="timeline" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="6 months">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Budget</label>
+                                <input type="text" id="budget" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="$100,000">
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Requirements Input -->
+                    <div class="bg-white rounded-lg shadow-md p-6 mt-6">
+                        <h2 class="text-lg font-semibold mb-4">Requirements Input</h2>
+                        <textarea id="requirementsInput" rows="6" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Enter existing requirements here..."></textarea>
+                        <button onclick="addRequirements()" class="mt-3 w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
+                            Add Requirements
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right Panel - Results & Messages -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-lg font-semibold mb-4">Agent Messages</h2>
+                        <div id="messageContainer" class="space-y-3 max-h-96 overflow-y-auto">
+                            <!-- Messages will appear here -->
+                        </div>
+                    </div>
+
+                    <!-- Results Display -->
+                    <div class="bg-white rounded-lg shadow-md p-6 mt-6">
+                        <h2 class="text-lg font-semibold mb-4">Analysis Results</h2>
+                        <div id="resultsContainer" class="space-y-4">
+                            <div class="text-gray-500 text-center py-8">
+                                <svg class="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                <p>Results will appear here after analysis</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Status Modal -->
+            <div id="systemStatusModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div class="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold">System Status</h2>
+                        <button onclick="toggleSystemStatus()" class="text-gray-500 hover:text-gray-700">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="systemStatusContent" class="space-y-6">
+                        <!-- System status content will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Initialize the multi-agent system
+        let system;
+        let messageHistory = [];
+        let currentResults = null;
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeSystem();
+            updateAgentStatus();
+            setInterval(updateAgentStatus, 5000); // Update every 5 seconds
+        });
+
+        async function initializeSystem() {
+            try {
+                // In a real implementation, this would connect to the backend
+                system = {
+                    status: 'active',
+                    agents: [
+                        { name: 'ReqElicitation', role: 'Requirement Elicitation', status: 'idle' },
+                        { name: 'ReqAnalysis', role: 'Requirement Analysis', status: 'idle' },
+                        { name: 'ReqValidation', role: 'Requirement Validation', status: 'idle' },
+                        { name: 'BusinessAnalyzer', role: 'Business Logic Analysis', status: 'idle' },
+                        { name: 'ConflictResolver', role: 'Conflict Resolution', status: 'idle' }
+                    ]
+                };
+                addMessage('System', 'Multi-Agent System initialized successfully', 'success');
+            } catch (error) {
+                addMessage('System', 'Error initializing system: ' + error.message, 'error');
+            }
+        }
+
+        function updateAgentStatus() {
+            if (!system) return;
+            
+            const statusContainer = document.getElementById('agentStatus');
+            statusContainer.innerHTML = '';
+            
+            system.agents.forEach(agent => {
+                const agentCard = document.createElement('div');
+                agentCard.className = 'agent-card bg-gray-50 p-4 rounded-lg border border-gray-200';
+                agentCard.innerHTML = `
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-medium text-sm">${agent.name}</h3>
+                        <span class="status-indicator status-${agent.status}"></span>
+                    </div>
+                    <p class="text-xs text-gray-600">${agent.role}</p>
+                    <div class="mt-2">
+                        <div class="text-xs text-gray-500">Status: ${agent.status}</div>
+                    </div>
+                `;
+                statusContainer.appendChild(agentCard);
+            });
+        }
+
+        function addMessage(sender, content, type = 'info') {
+            const messageContainer = document.getElementById('messageContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message-bubble p-3 rounded-lg ${
+                type === 'error' ? 'bg-red-50 border border-red-200' :
+                type === 'success' ? 'bg-green-50 border border-green-200' :
+                type === 'warning' ? 'bg-yellow-50 border border-yellow-200' :
+                'bg-blue-50 border border-blue-200'
+            }`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            messageDiv.innerHTML = `
+                <div class="flex justify-between items-start mb-1">
+                    <span class="font-medium text-sm">${sender}</span>
+                    <span class="text-xs text-gray-500">${timestamp}</span>
+                </div>
+                <div class="text-sm">${content}</div>
+            `;
+            
+            messageContainer.appendChild(messageDiv);
+            messageContainer.scrollTop = messageContainer.scrollHeight;
+            
+            messageHistory.push({ sender, content, type, timestamp });
+        }
+
+        function clearMessages() {
+            document.getElementById('messageContainer').innerHTML = '';
+            messageHistory = [];
+        }
+
+        async function startRequirementGathering() {
+            const stakeholder = {
+                name: document.getElementById('stakeholderName').value,
+                role: document.getElementById('stakeholderRole').value,
+                experience: '5 years'
+            };
+            
+            const context = {
+                domain: document.getElementById('domain').value,
+                project: document.getElementById('projectName').value,
+                timeline: document.getElementById('timeline').value,
+                budget: document.getElementById('budget').value
+            };
+            
+            addMessage('System', 'Starting requirement gathering workflow...', 'info');
+            
+            // Simulate the workflow
+            await simulateWorkflow('requirement_gathering', { stakeholder, context });
+        }
+
+        async function analyzeRequirements() {
+            const requirements = document.getElementById('requirementsInput').value;
+            if (!requirements.trim()) {
+                addMessage('System', 'Please enter requirements to analyze', 'warning');
+                return;
+            }
+            
+            addMessage('System', 'Analyzing requirements...', 'info');
+            
+            // Simulate analysis
+            await simulateWorkflow('requirement_analysis', { requirements });
+        }
+
+        async function validateRequirements() {
+            addMessage('System', 'Validating requirements...', 'info');
+            
+            // Simulate validation
+            await simulateWorkflow('requirement_validation', {});
+        }
+
+        async function simulateWorkflow(workflowType, data) {
+            // Update agent status to processing
+            system.agents.forEach(agent => {
+                agent.status = 'processing';
+            });
+            updateAgentStatus();
+            
+            // Simulate processing time
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Generate mock results based on workflow type
+            let results;
+            switch (workflowType) {
+                case 'requirement_gathering':
+                    results = generateMockRequirementResults(data);
+                    break;
+                case 'requirement_analysis':
+                    results = generateMockAnalysisResults(data);
+                    break;
+                case 'requirement_validation':
+                    results = generateMockValidationResults(data);
+                    break;
+            }
+            
+            // Update agent status back to idle
+            system.agents.forEach(agent => {
+                agent.status = 'idle';
+            });
+            updateAgentStatus();
+            
+            // Display results
+            displayResults(results);
+            addMessage('System', `${workflowType.replace('_', ' ').toUpperCase()} completed successfully`, 'success');
+        }
+
+        function generateMockRequirementResults(data) {
+            return {
+                type: 'requirement_gathering',
+                elicitation: {
+                    requirements: [
+                        { text: 'User authentication system with role-based access', category: 'security', priority: 'high' },
+                        { text: 'Responsive web interface for mobile and desktop', category: 'functional', priority: 'high' },
+                        { text: 'Real-time notifications for important events', category: 'functional', priority: 'medium' },
+                        { text: 'System should handle 1000 concurrent users', category: 'non-functional', priority: 'medium' },
+                        { text: 'Data backup and recovery mechanisms', category: 'security', priority: 'high' }
+                    ],
+                    confidence: 0.85
+                },
+                analysis: {
+                    ambiguities: [],
+                    gaps: [
+                        { type: 'missing_category', category: 'performance', severity: 'medium' }
+                    ],
+                    inconsistencies: [],
+                    feasibility: { overall: 0.8 },
+                    completeness: { overall: 0.75 }
+                }
+            };
+        }
+
+        function generateMockAnalysisResults(data) {
+            return {
+                type: 'requirement_analysis',
+                ambiguities: [
+                    { requirement: 'System should be fast', severity: 'medium', suggestion: 'Define specific performance metrics' }
+                ],
+                gaps: [
+                    { type: 'missing_category', category: 'usability', severity: 'low' }
+                ],
+                inconsistencies: [],
+                feasibility: { overall: 0.75 },
+                quality: { clarity: 0.8, specificity: 0.7, testability: 0.9 }
+            };
+        }
+
+        function generateMockValidationResults(data) {
+            return {
+                type: 'requirement_validation',
+                businessRuleCompliance: { score: 0.9, violations: [] },
+                stakeholderAlignment: { score: 0.8, conflicts: [] },
+                complianceStatus: { compliant: true, issues: [] },
+                qualityMetrics: { overall: 0.85 }
+            };
+        }
+
+        function displayResults(results) {
+            const resultsContainer = document.getElementById('resultsContainer');
+            currentResults = results;
+            
+            let html = '';
+            
+            if (results.type === 'requirement_gathering') {
+                html = `
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold text-lg mb-2">Elicited Requirements</h3>
+                            <div class="space-y-2">
+                                ${results.elicitation.requirements.map(req => `
+                                    <div class="p-3 bg-gray-50 rounded-lg">
+                                        <div class="flex justify-between items-start">
+                                            <p class="text-sm">${req.text}</p>
+                                            <span class="text-xs px-2 py-1 rounded ${
+                                                req.priority === 'high' ? 'bg-red-100 text-red-800' :
+                                                req.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                                'bg-green-100 text-green-800'
+                                            }">${req.priority}</span>
+                                        </div>
+                                        <div class="text-xs text-gray-500 mt-1">Category: ${req.category}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-blue-50 p-4 rounded-lg">
+                                <div class="text-2xl font-bold text-blue-600">${(results.elicitation.confidence * 100).toFixed(0)}%</div>
+                                <div class="text-sm text-gray-600">Confidence Score</div>
+                            </div>
+                            <div class="bg-green-50 p-4 rounded-lg">
+                                <div class="text-2xl font-bold text-green-600">${results.elicitation.requirements.length}</div>
+                                <div class="text-sm text-gray-600">Requirements</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (results.type === 'requirement_analysis') {
+                html = `
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold text-lg mb-2">Analysis Summary</h3>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="bg-red-50 p-3 rounded-lg">
+                                    <div class="text-lg font-bold text-red-600">${results.ambiguities.length}</div>
+                                    <div class="text-xs text-gray-600">Ambiguities</div>
+                                </div>
+                                <div class="bg-yellow-50 p-3 rounded-lg">
+                                    <div class="text-lg font-bold text-yellow-600">${results.gaps.length}</div>
+                                    <div class="text-xs text-gray-600">Gaps</div>
+                                </div>
+                                <div class="bg-blue-50 p-3 rounded-lg">
+                                    <div class="text-lg font-bold text-blue-600">${(results.feasibility.overall * 100).toFixed(0)}%</div>
+                                    <div class="text-xs text-gray-600">Feasibility</div>
+                                </div>
+                                <div class="bg-green-50 p-3 rounded-lg">
+                                    <div class="text-lg font-bold text-green-600">${(results.quality.clarity * 100).toFixed(0)}%</div>
+                                    <div class="text-xs text-gray-600">Clarity</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        ${results.ambiguities.length > 0 ? `
+                        <div>
+                            <h4 class="font-medium mb-2">Ambiguities Found</h4>
+                            <div class="space-y-2">
+                                ${results.ambiguities.map(amb => `
+                                    <div class="p-2 bg-red-50 rounded text-sm">
+                                        <div class="font-medium">${amb.requirement}</div>
+                                        <div class="text-xs text-gray-600">${amb.suggestion}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                `;
+            } else if (results.type === 'requirement_validation') {
+                html = `
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold text-lg mb-2">Validation Results</h3>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="bg-green-50 p-3 rounded-lg">
+                                    <div class="text-lg font-bold text-green-600">${(results.businessRuleCompliance.score * 100).toFixed(0)}%</div>
+                                    <div class="text-xs text-gray-600">Business Rules</div>
+                                </div>
+                                <div class="bg-blue-50 p-3 rounded-lg">
+                                    <div class="text-lg font-bold text-blue-600">${(results.stakeholderAlignment.score * 100).toFixed(0)}%</div>
+                                    <div class="text-xs text-gray-600">Stakeholder Alignment</div>
+                                </div>
+                                <div class="bg-purple-50 p-3 rounded-lg">
+                                    <div class="text-lg font-bold text-purple-600">${results.complianceStatus.compliant ? 'Yes' : 'No'}</div>
+                                    <div class="text-xs text-gray-600">Compliant</div>
+                                </div>
+                                <div class="bg-indigo-50 p-3 rounded-lg">
+                                    <div class="text-lg font-bold text-indigo-600">${(results.qualityMetrics.overall * 100).toFixed(0)}%</div>
+                                    <div class="text-xs text-gray-600">Quality Score</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-green-50 p-4 rounded-lg">
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span class="text-green-800 font-medium">Requirements validation completed successfully</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            resultsContainer.innerHTML = html;
+        }
+
+        function toggleSystemStatus() {
+            const modal = document.getElementById('systemStatusModal');
+            const content = document.getElementById('systemStatusContent');
+            
+            if (modal.classList.contains('hidden')) {
+                // Populate system status content
+                content.innerHTML = `
+                    <div class="space-y-6">
+                        <div>
+                            <h3 class="text-lg font-semibold mb-3">System Overview</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-gray-50 p-4 rounded-lg">
+                                    <div class="text-2xl font-bold text-gray-900">${system.agents.length}</div>
+                                    <div class="text-sm text-gray-600">Active Agents</div>
+                                </div>
+                                <div class="bg-blue-50 p-4 rounded-lg">
+                                    <div class="text-2xl font-bold text-blue-600">${messageHistory.length}</div>
+                                    <div class="text-sm text-gray-600">Messages</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-lg font-semibold mb-3">Agent Details</h3>
+                            <div class="space-y-3">
+                                ${system.agents.map(agent => `
+                                    <div class="border border-gray-200 rounded-lg p-4">
+                                        <div class="flex justify-between items-start">
+                                            <div>
+                                                <h4 class="font-medium">${agent.name}</h4>
+                                                <p class="text-sm text-gray-600">${agent.role}</p>
+                                            </div>
+                                            <span class="status-indicator status-${agent.status}"></span>
+                                        </div>
+                                        <div class="mt-2 text-sm text-gray-500">
+                                            Status: <span class="font-medium">${agent.status}</span>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-lg font-semibold mb-3">Recent Activity</h3>
+                            <div class="space-y-2 max-h-48 overflow-y-auto">
+                                ${messageHistory.slice(-10).reverse().map(msg => `
+                                    <div class="text-sm p-2 bg-gray-50 rounded">
+                                        <span class="font-medium">${msg.sender}:</span> ${msg.content}
+                                        <div class="text-xs text-gray-500">${msg.timestamp}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function addRequirements() {
+            const input = document.getElementById('requirementsInput');
+            if (input.value.trim()) {
+                addMessage('User', 'Added requirements for analysis', 'info');
+                input.value = '';
+            }
+        }
+    </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Agent Requirement Gathering System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .agent-card {
+            transition: all 0.3s ease;
+        }
+        .agent-card:hover {
+            transform: translateY(-2px);
+        }
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .status-idle { background-color: #10b981; }
+        .status-processing { background-color: #f59e0b; }
+        .status-error { background-color: #ef4444; }
+        .message-bubble {
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-white shadow-sm border-b">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="bg-blue-600 p-2 rounded-lg">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-bold text-gray-900">Multi-Agent Requirement System</h1>
+                            <p class="text-sm text-gray-500">AI-Powered Requirement Gathering</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button onclick="toggleSystemStatus()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                            System Status
+                        </button>
+                        <button onclick="clearMessages()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
+                            Clear Messages
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Left Panel - Agent Status -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-lg font-semibold mb-4">Agent Status</h2>
+                        <div id="agentStatus" class="space-y-3">
+                            <!-- Agent status will be populated here -->
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="bg-white rounded-lg shadow-md p-6 mt-6">
+                        <h2 class="text-lg font-semibold mb-4">Quick Actions</h2>
+                        <div class="space-y-3">
+                            <button onclick="startRequirementGathering()" class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                                Start Requirement Gathering
+                            </button>
+                            <button onclick="analyzeRequirements()" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                                Analyze Requirements
+                            </button>
+                            <button onclick="validateRequirements()" class="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
+                                Validate Requirements
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Middle Panel - Input & Configuration -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-lg font-semibold mb-4">Stakeholder Configuration</h2>
+                        <form id="stakeholderForm" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Stakeholder Name</label>
+                                <input type="text" id="stakeholderName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="John Smith">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                                <select id="stakeholderRole" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="business_analyst">Business Analyst</option>
+                                    <option value="developer">Developer</option>
+                                    <option value="user">End User</option>
+                                    <option value="manager">Project Manager</option>
+                                    <option value="qa_engineer">QA Engineer</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Domain</label>
+                                <select id="domain" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="ecommerce">E-commerce</option>
+                                    <option value="healthcare">Healthcare</option>
+                                    <option value="education">Education</option>
+                                    <option value="finance">Finance</option>
+                                    <option value="manufacturing">Manufacturing</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Project Name</label>
+                                <input type="text" id="projectName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="Online Platform">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Timeline</label>
+                                <input type="text" id="timeline" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="6 months">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Budget</label>
+                                <input type="text" id="budget" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="$100,000">
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Requirements Input -->
+                    <div class="bg-white rounded-lg shadow-md p-6 mt-6">
+                        <h2 class="text-lg font-semibold mb-4">Requirements Input</h2>
+                        <textarea id="requirementsInput" rows="6" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Enter existing requirements here..."></textarea>
+                        <button onclick="addRequirements()" class="mt-3 w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
+                            Add Requirements
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right Panel - Results & Messages -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-lg font-semibold mb-4">Agent Messages</h2>
+                        <div id="messageContainer" class="space-y-3 max-h-96 overflow-y-auto">
+                            <!-- Messages will appear here -->
+                        </div>
+                    </div>
+
+                    <!-- Results Display -->
+                    <div class="bg-white rounded-lg shadow-md p-6 mt-6">
+                        <h2 class="text-lg font-semibold mb-4">Analysis Results</h2>
+                        <div id="resultsContainer" class="space-y-4">
+                            <div class="text-gray-500 text-center py-8">
+                                <svg class="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                <p>Results will appear here after analysis</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Status Modal -->
+            <div id="systemStatusModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div class="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold">System Status</h2>
+                        <button onclick="toggleSystemStatus()" class="text-gray-500 hover:text-gray-700">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="systemStatusContent" class="space-y-6">
+                        <!-- System status content will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Initialize the multi-agent system
+        let system;
+        let messageHistory = [];
+        let currentResults = null;
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeSystem();
+            updateAgentStatus();
+            setInterval(updateAgentStatus, 5000); // Update every 5 seconds
+        });
+
+        async function initializeSystem() {
+            try {
+                // In a real implementation, this would connect to the backend
+                system = {
+                    status: 'active',
+                    agents: [
+                        { name: 'ReqElicitation', role: 'Requirement Elicitation', status: 'idle' },
+                        { name: 'ReqAnalysis', role: 'Requirement Analysis', status: 'idle' },
+                        { name: 'ReqValidation', role: 'Requirement Validation', status: 'idle' },
+                        { name: 'BusinessAnalyzer', role: 'Business Logic Analysis', status: 'idle' },
+                        { name: 'ConflictResolver', role: 'Conflict Resolution', status: 'idle' }
+                    ]
+                };
+                addMessage('System', 'Multi-Agent System initialized successfully', 'success');
+            } catch (error) {
+                addMessage('System', 'Error initializing system: ' + error.message, 'error');
+            }
+        }
+
+        function updateAgentStatus() {
+            if (!system) return;
+            
+            const statusContainer = document.getElementById('agentStatus');
+            statusContainer.innerHTML = '';
+            
+            system.agents.forEach(agent => {
+                const agentCard = document.createElement('div');
+                agentCard.className = 'agent-card bg-gray-50 p-4 rounded-lg border border-gray-200';
+                agentCard.innerHTML = `
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-medium text-sm">${agent.name}</h3>
+                        <span class="status-indicator status-${agent.status}"></span>
+                    </div>
+                    <p class="text-xs text-gray-600">${agent.role}</p>
+                    <div class="mt-2">
+                        <div class="text-xs text-gray-500">Status: ${agent.status}</div>
+                    </div>
+                `;
+                statusContainer.appendChild(agentCard);
+            });
+        }
+
+        function addMessage(sender, content, type = 'info') {
+            const messageContainer = document.getElementById('messageContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message-bubble p-3 rounded-lg ${
+                type === 'error' ? 'bg-red-50 border border-red-200' :
+                type === 'success' ? 'bg-green-50 border border-green-200' :
+                type === 'warning' ? 'bg-yellow-50 border border-yellow-200' :
+                'bg-blue-50 border border-blue-200'
+            }`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            messageDiv.innerHTML = `
+                <div class="flex justify-between items-start mb-1">
+                    <span class="font-medium text-sm">${sender}</span>
+                    <span class="text-xs text-gray-500">${timestamp}</span>
+                </div>
+                <div class="text-sm">${content}</div>
+            `;
+            
+            messageContainer.appendChild(messageDiv);
+            messageContainer.scrollTop = messageContainer.scrollHeight;
+            
+            messageHistory.push({ sender, content, type, timestamp });
+        }
+
+        function clearMessages() {
+            document.getElementById('messageContainer').innerHTML = '';
+            messageHistory = [];
+        }
+
+        async function startRequirementGathering() {
+            const stakeholder = {
+                name: document.getElementById('stakeholderName').value,
+                role: document.getElementById('stakeholderRole').value,
+                experience: '5 years'
+            };
+            
+            const context = {
+                domain: document.getElementById('domain').value,
+                project: document.getElementById('projectName').value,
+                timeline: document.getElementById('timeline').value,
+                budget: document.getElementById('budget').value
+            };
+            
+            addMessage('System', 'Starting requirement gathering workflow...', 'info');
+            
+            // Simulate the workflow
+            await simulateWorkflow('requirement_gathering', { stakeholder, context });
+        }
+
+        async function analyzeRequirements() {
+            const requirements = document.getElementById('requirementsInput').value;
+            if (!requirements.trim()) {
+                addMessage('System', 'Please enter requirements to analyze', 'warning');
+                return;
+            }
+            
+            addMessage('System', 'Analyzing requirements...', 'info');
+            
+            // Simulate analysis
+            await simulateWorkflow('requirement_analysis', { requirements });
+        }
+
+        async function validateRequirements() {
+            addMessage('System', 'Validating requirements...', 'info');
+            
+            // Simulate validation
+            await simulateWorkflow('requirement_validation', {});
+        }
+
+        async function simulateWorkflow(workflowType, data) {
+            // Update agent status to processing
+            system.agents.forEach(agent => {
+                agent.status = 'processing';
+            });
+            updateAgentStatus();
+            
+            // Simulate processing time
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Generate mock results based on workflow type
+            let results;
+            switch (workflowType) {
+                case 'requirement_gathering':
+                    results = generateMockRequirementResults(data);
+                    break;
+                case 'requirement_analysis':
+                    results = generateMockAnalysisResults(data);
+                    break;
+                case 'requirement_validation':
+                    results = generateMockValidationResults(data);
+                    break;
+            }
+            
+            // Update agent status back to idle
+            system.agents.forEach(agent => {
+                agent.status = 'idle';
+            });
+            updateAgentStatus();
+            
+            // Display results
+            displayResults(results);
+            addMessage('System', `${workflowType.replace('_', ' ').toUpperCase()} completed successfully`, 'success');
+        }
+
+        function generateMockRequirementResults(data) {
+            return {
+                type: 'requirement_gathering',
+                elicitation: {
+                    requirements: [
+                        { text: 'User authentication system with role-based access', category: 'security', priority: 'high' },
+                        { text: 'Responsive web interface for mobile and desktop', category: 'functional', priority: 'high' },
+                        { text: 'Real-time notifications for important events', category: 'functional', priority: 'medium' },
+                        { text: 'System should handle 1000 concurrent users', category: 'non-functional', priority: 'medium' },
+                        { text: 'Data backup and recovery mechanisms', category: 'security', priority: 'high' }
+                    ],
+                    confidence: 0.85
+                },
+                analysis: {
+                    ambiguities: [],
+                    gaps: [
+                        { type: 'missing_category', category: 'performance', severity: 'medium' }
+                    ],
+                    inconsistencies: [],
+                    feasibility: { overall: 0.8 },
+                    completeness: { overall: 0.75 }
+                }
+            };
+        }
+
+        function generateMockAnalysisResults(data) {
+            return {
+                type: 'requirement_analysis',
+                ambiguities: [
+                    { requirement: 'System should be fast', severity: 'medium', suggestion: 'Define specific performance metrics' }
+                ],
+                gaps: [
+                    { type: 'missing_category', category: 'usability', severity: 'low' }
+                ],
+                inconsistencies: [],
+                feasibility: { overall: 0.75 },
+                quality: { clarity: 0.8, specificity: 0.7, testability: 0.9 }
+            };
+        }
+
+        function generateMockValidationResults(data) {
+            return {
+                type: 'requirement_validation',
+                businessRuleCompliance: { score: 0.9, violations: [] },
+                stakeholderAlignment: { score: 0.8, conflicts: [] },
+                complianceStatus: { compliant: true, issues: [] },
+                qualityMetrics: { overall: 0.85 }
+            };
+        }
+
+        function displayResults(results) {
+            const resultsContainer = document.getElementById('resultsContainer');
+            currentResults = results;
+            
+            let html = '';
+            
+            if (results.type === 'requirement_gathering') {
+                html = `
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold text-lg mb-2">Elicited Requirements</h3>
+                            <div class="space-y-2">
+                                ${results.elicitation.requirements.map(req => `
+                                    <div class="p-3 bg-gray-50 rounded-lg">
+                                        <div class="flex justify-between items-start">
+                                            <p class="text-sm">${req.text}</p>
+                                            <span class="text-xs px-2 py-1 rounded ${
+                                                req.priority === 'high' ? 'bg-red-100 text-red-800' :
+                                                req.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                                'bg-green-100 text-green-800'
+                                            }">${req.priority}</span>
+                                        </div>
+                                        <div class="text-xs text-gray-500 mt-1">Category: ${req.category}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-blue-50 p-4 rounded-lg">
+                                <div class="text-2xl font-bold text-blue-600">${(results.elicitation.confidence * 100).toFixed(0)}%</div>
+                                <div class="text-sm text-gray-600">Confidence Score</div>
+                            </div>
+                            <div class="bg-green-50 p-4 rounded-lg">
+                                <div class="text-2xl font-bold text-green-600">${results.elicitation.requirements.length}</div>
+                                <div class="text-sm text-gray-600">Requirements</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (results.type === 'requirement_analysis') {
+                html = `
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold text-lg mb-2">Analysis Summary</h3>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="bg-red-50 p-3 rounded-lg">
+                                    <div class="text-lg font-bold text-red-600">${results.ambiguities.length}</div>
+                                    <div class="text-xs text-gray-600">Ambiguities</div>
+                                </div>
+                                <div class="bg-yellow-50 p-3 rounded-lg">
+                                    <div class="text-lg font-bold text-yellow-600">${results.gaps.length}</div>
+                                    <div class="text-xs text-gray-600">Gaps</div>
+                                </div>
+                                <div class="bg-blue-50 p-3 rounded-lg">
+                                    <div class="text-lg font-bold text-blue-600">${(results.feasibility.overall * 100).toFixed(0)}%</div>
+                                    <div class="text-xs text-gray-600">Feasibility</div>
+                                </div>
+                                <div class="bg-green-50 p-3 rounded-lg">
+                                    <div class="text-lg font-bold text-green-600">${(results.quality.clarity * 100).toFixed(0)}%</div>
+                                    <div class="text-xs text-gray-600">Clarity</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        ${results.ambiguities.length > 0 ? `
+                        <div>
+                            <h4 class="font-medium mb-2">Ambiguities Found</h4>
+                            <div class="space-y-2">
+                                ${results.ambiguities.map(amb => `
+                                    <div class="p-2 bg-red-50 rounded text-sm">
+                                        <div class="font-medium">${amb.requirement}</div>
+                                        <div class="text-xs text-gray-600">${amb.suggestion}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                `;
+            } else if (results.type === 'requirement_validation') {
+                html = `
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold text-lg mb-2">Validation Results</h3>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="bg-green-50 p-3 rounded-lg">
+                                    <div class="text-lg font-bold text-green-600">${(results.businessRuleCompliance.score * 100).toFixed(0)}%</div>
+                                    <div class="text-xs text-gray-600">Business Rules</div>
+                                </div>
+                                <div class="bg-blue-50 p-3 rounded-lg">
+                                    <div class="text-lg font-bold text-blue-600">${(results.stakeholderAlignment.score * 100).toFixed(0)}%</div>
+                                    <div class="text-xs text-gray-600">Stakeholder Alignment</div>
+                                </div>
+                                <div class="bg-purple-50 p-3 rounded-lg">
+                                    <div class="text-lg font-bold text-purple-600">${results.complianceStatus.compliant ? 'Yes' : 'No'}</div>
+                                    <div class="text-xs text-gray-600">Compliant</div>
+                                </div>
+                                <div class="bg-indigo-50 p-3 rounded-lg">
+                                    <div class="text-lg font-bold text-indigo-600">${(results.qualityMetrics.overall * 100).toFixed(0)}%</div>
+                                    <div class="text-xs text-gray-600">Quality Score</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-green-50 p-4 rounded-lg">
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span class="text-green-800 font-medium">Requirements validation completed successfully</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            resultsContainer.innerHTML = html;
+        }
+
+        function toggleSystemStatus() {
+            const modal = document.getElementById('systemStatusModal');
+            const content = document.getElementById('systemStatusContent');
+            
+            if (modal.classList.contains('hidden')) {
+                // Populate system status content
+                content.innerHTML = `
+                    <div class="space-y-6">
+                        <div>
+                            <h3 class="text-lg font-semibold mb-3">System Overview</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-gray-50 p-4 rounded-lg">
+                                    <div class="text-2xl font-bold text-gray-900">${system.agents.length}</div>
+                                    <div class="text-sm text-gray-600">Active Agents</div>
+                                </div>
+                                <div class="bg-blue-50 p-4 rounded-lg">
+                                    <div class="text-2xl font-bold text-blue-600">${messageHistory.length}</div>
+                                    <div class="text-sm text-gray-600">Messages</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-lg font-semibold mb-3">Agent Details</h3>
+                            <div class="space-y-3">
+                                ${system.agents.map(agent => `
+                                    <div class="border border-gray-200 rounded-lg p-4">
+                                        <div class="flex justify-between items-start">
+                                            <div>
+                                                <h4 class="font-medium">${agent.name}</h4>
+                                                <p class="text-sm text-gray-600">${agent.role}</p>
+                                            </div>
+                                            <span class="status-indicator status-${agent.status}"></span>
+                                        </div>
+                                        <div class="mt-2 text-sm text-gray-500">
+                                            Status: <span class="font-medium">${agent.status}</span>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-lg font-semibold mb-3">Recent Activity</h3>
+                            <div class="space-y-2 max-h-48 overflow-y-auto">
+                                ${messageHistory.slice(-10).reverse().map(msg => `
+                                    <div class="text-sm p-2 bg-gray-50 rounded">
+                                        <span class="font-medium">${msg.sender}:</span> ${msg.content}
+                                        <div class="text-xs text-gray-500">${msg.timestamp}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function addRequirements() {
+            const input = document.getElementById('requirementsInput');
+            if (input.value.trim()) {
+                addMessage('User', 'Added requirements for analysis', 'info');
+                input.value = '';
+            }
+        }
+    </script>
+</body>
+</html>
